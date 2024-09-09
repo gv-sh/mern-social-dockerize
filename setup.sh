@@ -37,6 +37,7 @@ services:
 
 volumes:
   mongo-data:
+    driver: local
 EOL
 
 # Create Dockerfile
