@@ -1,8 +1,13 @@
 #!/bin/bash
 
+# Create a new directory for our project
+mkdir -p mern-social-app
+cd mern-social-app
+
 # Clone the repository
 git clone https://github.com/shamahoque/mern-social.git
-cd mern-social
+mv mern-social/* .
+rm -rf mern-social
 
 # Create docker-compose.yml file
 cat > docker-compose.yml << EOL
@@ -47,7 +52,18 @@ EOL
 # Add current user to the docker group
 sudo usermod -aG docker $USER
 
-# Inform the user to log out and log back in
-echo "Please log out and log back in for the group changes to take effect."
-echo "After logging back in, run the following command to start the containers:"
-echo "docker-compose up --build"
+# Change ownership of the current directory to the current user
+sudo chown -R $USER:$USER .
+
+# Make sure the current user can read and write to the docker socket
+sudo chmod 666 /var/run/docker.sock
+
+# Inform the user about the next steps
+echo "Setup complete. Please follow these steps:"
+echo "1. Log out and log back in for the group changes to take effect."
+echo "2. After logging back in, run the following commands:"
+echo "   cd mern-social-app"
+echo "   docker-compose up --build"
+echo ""
+echo "If you still encounter permission issues, you can run Docker commands with sudo:"
+echo "   sudo docker-compose up --build"
