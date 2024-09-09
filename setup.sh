@@ -67,6 +67,8 @@ services:
       - "3000:3000" # Exposing backend port
     environment:
       - MONGO_URL=mongodb://mongo:27017/mern-social
+      - MONGO_HOST=mongo   # Setting MONGO_HOST for the config file
+      - MONGO_PORT=27017   # Setting MONGO_PORT for the config file
     depends_on:
       - mongo
     volumes:
