@@ -1,12 +1,56 @@
 #!/bin/bash
 
+# Function to check if Docker is installed
+check_docker() {
+  if ! [ -x "$(command -v docker)" ]; then
+    echo "Error: Docker is not installed." >&2
+    exit 1
+  fi
+  if ! [ -x "$(command -v docker-compose)" ]; then
+    echo "Error: Docker Compose is not installed." >&2
+    exit 1
+  fi
+}
+
+# Function to clean up previous project directory if it exists
+clean_up() {
+  if [ -d "mern-social-app" ]; then
+    read -p "Directory 'mern-social-app' already exists. Do you want to remove it and start fresh? (y/n) " choice
+    if [ "$choice" = "y" ]; then
+      rm -rf mern-social-app
+      echo "Previous 'mern-social-app' directory removed."
+    else
+      echo "Exiting script to avoid overwriting existing files."
+      exit 1
+    fi
+  fi
+}
+
+# Function to remove existing Docker containers, images, and volumes
+clean_docker() {
+  docker-compose down -v --rmi all 2>/dev/null
+  docker system prune -f
+  echo "Cleaned up existing Docker containers, images, and volumes."
+}
+
+# Check if Docker and Docker Compose are installed
+check_docker
+
+# Clean up the previous project directory if it exists
+clean_up
+
+# Clean up existing Docker resources
+clean_docker
+
 # Create a new directory for our project
 mkdir -p mern-social-app
 cd mern-social-app
 
 # Clone the repository
 git clone https://github.com/shamahoque/mern-social.git
-mv mern-social/* .
+
+# Sync contents to the current directory using rsync
+rsync -av --progress mern-social/ . --exclude .git
 rm -rf mern-social
 
 # Create docker-compose.yml file
