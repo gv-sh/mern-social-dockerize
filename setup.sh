@@ -25,6 +25,9 @@ services:
       - MONGO_URL=mongodb://mongo:27017/mern-social
     depends_on:
       - mongo
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
     command: npm run development
 
   mongo:
