@@ -44,4 +44,10 @@ EXPOSE 3000
 CMD ["npm", "run", "development"]
 EOL
 
-docker-compose up --build
+# Add current user to the docker group
+sudo usermod -aG docker $USER
+
+# Inform the user to log out and log back in
+echo "Please log out and log back in for the group changes to take effect."
+echo "After logging back in, run the following command to start the containers:"
+echo "docker-compose up --build"
