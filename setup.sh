@@ -64,11 +64,14 @@ services:
       dockerfile: Dockerfile
     container_name: mern-app
     ports:
-      - "3000:3000" # Exposing backend port
+      - "3000:3000"
     environment:
-      - MONGO_URL=mongodb://mongo:27017/mern-social
-      - MONGO_HOST=mongo   # Setting MONGO_HOST for the config file
-      - MONGO_PORT=27017   # Setting MONGO_PORT for the config file
+      - NODE_ENV=development
+      - PORT=3000
+      - JWT_SECRET=YOUR_secret_key
+      - MONGODB_URI=mongodb://mongo:27017/mernproject
+      - MONGO_HOST=mongo
+      - MONGO_PORT=27017
     depends_on:
       - mongo
     volumes:
