@@ -21,8 +21,6 @@ services:
     container_name: mern-app
     ports:
       - "3000:3000" # Exposing backend port
-    volumes:
-      - .:/usr/src/app
     environment:
       - MONGO_URL=mongodb://mongo:27017/mern-social
     depends_on:
@@ -35,7 +33,10 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - ./data:/data/db
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
 EOL
 
 # Create Dockerfile
@@ -44,6 +45,7 @@ FROM node:13.12.0
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
+RUN npm install -g nodemon
 COPY . .
 EXPOSE 3000
 CMD ["npm", "run", "development"]
