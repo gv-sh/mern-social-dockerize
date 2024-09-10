@@ -37,24 +37,3 @@ check_command "Installing Docker Compose"
 # Verify Docker and Docker Compose installations
 docker --version
 docker-compose --version
-
-# Install unzip
-echo "Installing unzip..."
-sudo apt-get install -y unzip
-check_command "Installing unzip"
-
-# Install AWS CLI
-echo "Installing AWS CLI..."
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-check_command "Downloading AWS CLI"
-
-unzip awscliv2.zip
-check_command "Unzipping AWS CLI"
-
-sudo ./aws/install
-check_command "Installing AWS CLI"
-
-rm -rf aws awscliv2.zip
-
-# Verify AWS CLI installation
-aws --version
