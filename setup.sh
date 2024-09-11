@@ -17,7 +17,7 @@ clean_up() {
   if [ -d "mern-social-app" ]; then
     read -p "Directory 'mern-social-app' already exists. Do you want to remove it and start fresh? (y/n) " choice
     if [ "$choice" = "y" ]; then
-      rm -rf mern-social-app
+      sudo rm -rf mern-social-app
       echo "Previous 'mern-social-app' directory removed."
     else
       echo "Exiting script to avoid overwriting existing files."
@@ -36,11 +36,11 @@ clean_docker() {
 # Check if Docker and Docker Compose are installed
 check_docker
 
-# Clean up the previous project directory if it exists
-clean_up
-
 # Clean up existing Docker resources
 clean_docker
+
+# Clean up the previous project directory if it exists
+clean_up
 
 # Create a new directory for our project
 mkdir -p mern-social-app
@@ -187,7 +187,7 @@ EOL
 mkdir -p ssl
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ssl/localhost.key -out ssl/localhost.crt -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=localhost"
 
-# Create Dockerfile
+# Create Dockerfile for the backend
 cat > Dockerfile << EOL
 FROM node:13.12.0
 WORKDIR /usr/src/app
@@ -197,6 +197,17 @@ RUN npm install -g nodemon
 COPY . .
 EXPOSE 3000
 CMD ["npm", "run", "development"]
+EOL
+
+# Create Dockerfile for the frontend
+cat > client/Dockerfile << EOL
+FROM node:13.12.0
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["npm", "start"]
 EOL
 
 # Add current user to the docker group
