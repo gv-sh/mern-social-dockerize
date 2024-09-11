@@ -53,6 +53,23 @@ git clone https://github.com/shamahoque/mern-social.git
 rsync -av --progress mern-social/ . --exclude .git
 rm -rf mern-social
 
+# Ensure package.json exists in the client directory
+if [ ! -f "client/package.json" ]; then
+  if [ -f "package.json" ]; then
+    cp package.json client/
+    echo "Copied package.json to client directory"
+  else
+    echo "Error: package.json not found in the root or client directory. Please check the repository structure."
+    exit 1
+  fi
+fi
+
+# Verify client/package.json exists
+if [ ! -f "client/package.json" ]; then
+  echo "Error: client/package.json still not found after attempted copy. Please check the repository structure."
+  exit 1
+fi
+
 # Create docker-compose.yml file
 cat > docker-compose.yml << EOL
 version: '3.8'
