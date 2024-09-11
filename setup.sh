@@ -58,13 +58,26 @@ cat > docker-compose.yml << EOL
 version: '3.8'
 
 services:
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: mern-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=https://localhost/api
+    depends_on:
+      - app
+    volumes:
+      - ./client:/usr/src/app
+      - /usr/src/app/node_modules
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: mern-app
-    ports:
-      - "3000:3000"
     environment:
       - NODE_ENV=development
       - PORT=3000
@@ -82,15 +95,97 @@ services:
   mongo:
     image: mongo:4.2.0
     container_name: mern-mongo
-    ports:
-      - "27017:27017"
     volumes:
       - mongo-data:/data/db
+
+  mongo-express:
+    image: mongo-express
+    container_name: mern-mongo-express
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+    depends_on:
+      - mongo
+
+  nginx:
+    image: nginx:alpine
+    container_name: mern-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+      - frontend
+      - mongo-express
+
+networks:
+  default:
+    name: mern-network
 
 volumes:
   mongo-data:
     driver: local
 EOL
+
+# Create Nginx configuration file
+cat > nginx.conf << EOL
+events {
+    worker_connections 1024;
+}
+
+http {
+    upstream frontend {
+        server frontend:3000;
+    }
+
+    upstream backend {
+        server app:3000;
+    }
+
+    upstream mongo-express {
+        server mongo-express:8081;
+    }
+
+    server {
+        listen 80;
+        server_name localhost;
+        return 301 https://\$host\$request_uri;
+    }
+
+    server {
+        listen 443 ssl;
+        server_name localhost;
+
+        ssl_certificate /etc/nginx/ssl/localhost.crt;
+        ssl_certificate_key /etc/nginx/ssl/localhost.key;
+
+        location / {
+            proxy_pass http://frontend;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+
+        location /api {
+            proxy_pass http://backend;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+
+        location /mongo-express {
+            proxy_pass http://mongo-express;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+    }
+}
+EOL
+
+# Generate self-signed SSL certificate
+mkdir -p ssl
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ssl/localhost.key -out ssl/localhost.crt -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=localhost"
 
 # Create Dockerfile
 cat > Dockerfile << EOL
@@ -120,6 +215,9 @@ echo "2. After logging back in, run the following commands:"
 echo "   cd mern-social-app"
 echo "   docker-compose build --no-cache"
 echo "   docker-compose up"
+echo ""
+echo "3. Access the application at https://localhost"
+echo "4. Access Mongo Express at https://localhost/mongo-express"
 echo ""
 echo "If you still encounter permission issues, you can run Docker commands with sudo:"
 echo "   sudo docker-compose build --no-cache"
