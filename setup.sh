@@ -212,7 +212,9 @@ COPY package*.json ./
 RUN mkdir -p node_modules && chown -R node:node .
 USER node
 RUN npm install
+USER root
 RUN npm install -g nodemon
+USER node
 COPY --chown=node:node . .
 EXPOSE 3000
 CMD ["npm", "run", "development"]
