@@ -215,6 +215,7 @@ RUN npm install
 USER root
 RUN npm install -g nodemon
 USER node
+RUN npm install @babel/plugin-transform-react-jsx --save-dev
 COPY --chown=node:node . .
 EXPOSE 3000
 CMD ["npm", "run", "development"]
@@ -226,6 +227,7 @@ FROM node:13.12.0
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
+RUN npm run build  # Ensure the build is run
 COPY . .
 EXPOSE 3000
 CMD ["npm", "start"]
