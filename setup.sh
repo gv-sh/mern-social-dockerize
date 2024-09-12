@@ -192,13 +192,8 @@ cat > Dockerfile << EOL
 FROM node:13.12.0
 WORKDIR /usr/src/app
 COPY package*.json ./
-RUN mkdir -p node_modules && chown -R node:node .
-USER node
 RUN npm install
-USER root
-RUN npm install -g nodemon
-USER node
-COPY --chown=node:node . .
+COPY . .
 EXPOSE 3000
 CMD ["npm", "run", "development"]
 EOL
