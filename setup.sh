@@ -75,21 +75,6 @@ cat > docker-compose.yml << EOL
 version: '3.8'
 
 services:
-  frontend:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-    container_name: mern-frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - REACT_APP_API_URL=https://localhost/api
-    depends_on:
-      - app
-    volumes:
-      - ./client:/usr/src/app
-      - /usr/src/app/node_modules
-
   app:
     build:
       context: .
@@ -102,12 +87,15 @@ services:
       - MONGODB_URI=mongodb://mongo:27017/mernproject
       - MONGO_HOST=mongo
       - MONGO_PORT=27017
+      - REACT_APP_API_URL=https://localhost/api  # This will serve both the client and server
     depends_on:
       - mongo
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    command: npm run development
+    ports:
+      - "3000:3000"  # Expose the frontend port
+    command: npm run development  # Development mode
 
   mongo:
     image: mongo:4.2.0
@@ -135,7 +123,6 @@ services:
       - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - app
-      - frontend
       - mongo-express
 
 networks:
@@ -154,11 +141,7 @@ events {
 }
 
 http {
-    upstream frontend {
-        server frontend:3000;
-    }
-
-    upstream backend {
+    upstream app {
         server app:3000;
     }
 
@@ -180,13 +163,13 @@ http {
         ssl_certificate_key /etc/nginx/ssl/localhost.key;
 
         location / {
-            proxy_pass http://frontend;
+            proxy_pass http://app;
             proxy_set_header Host \$host;
             proxy_set_header X-Real-IP \$remote_addr;
         }
 
         location /api {
-            proxy_pass http://backend;
+            proxy_pass http://app;
             proxy_set_header Host \$host;
             proxy_set_header X-Real-IP \$remote_addr;
         }
@@ -204,7 +187,7 @@ EOL
 mkdir -p ssl
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ssl/localhost.key -out ssl/localhost.crt -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=localhost"
 
-# Create Dockerfile for the backend
+# Create Dockerfile for the app
 cat > Dockerfile << EOL
 FROM node:13.12.0
 WORKDIR /usr/src/app
@@ -215,21 +198,13 @@ RUN npm install
 USER root
 RUN npm install -g nodemon
 USER node
-RUN npm install @babel/plugin-transform-react-jsx --save-dev
 COPY --chown=node:node . .
+
+# Build client
+RUN cd client && npm install && npm run build
+
 EXPOSE 3000
 CMD ["npm", "run", "development"]
-EOL
-
-# Create Dockerfile for the frontend
-cat > client/Dockerfile << EOL
-FROM node:13.12.0
-WORKDIR /usr/src/app
-COPY package*.json ./
-RUN npm install
-COPY . .
-EXPOSE 3000
-CMD ["npm", "start"]
 EOL
 
 # Add current user to the docker group
