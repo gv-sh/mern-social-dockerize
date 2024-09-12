@@ -199,10 +199,6 @@ USER root
 RUN npm install -g nodemon
 USER node
 COPY --chown=node:node . .
-
-# Build client
-RUN cd client && npm install && npm run build
-
 EXPOSE 3000
 CMD ["npm", "run", "development"]
 EOL
